@@ -1,13 +1,21 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Player } from '../entities/player.entity';
 import { Repository } from 'typeorm';
+import { CreatePlayerDto } from './dto/create-player.dto';
+import { RatingService } from '../rating/rating.service';
 
 @Injectable()
 export class PlayerService {
   constructor(
     @InjectRepository(Player)
     private readonly playerRepository: Repository<Player>,
+    private readonly ratingService: RatingService,
   ) {}
 
   async get(id: string): Promise<Player> {
@@ -36,6 +44,28 @@ export class PlayerService {
         }>();
     } catch (error) {
       throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async create(dto: CreatePlayerDto): Promise<Player> {
+    const { username } = dto;
+    const existingUsername = await this.playerRepository.findOne({
+      where: { username },
+    });
+    if (existingUsername)
+      throw new ConflictException('Username already exists');
+
+    const base = this.ratingService.default();
+    const player = {
+      username,
+      mu: base.mu,
+      sigma: base.sigma,
+      rating: this.ratingService.calRating(base),
+    } as Player;
+    try {
+      return await this.playerRepository.save(player);
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 }
