@@ -1,5 +1,5 @@
 import {
-    BadGatewayException,
+  BadGatewayException,
   HttpException,
   HttpStatus,
   Injectable,
@@ -23,7 +23,22 @@ export class MatchService {
     private readonly ratingService: RatingService,
   ) {}
 
-  async create(dto: CreateMatchDto) {
+  async getAll(): Promise<Match[]> {
+    try {
+      const matches = await this.matchRepo.find({
+        relations: ['playerA', 'playerB'],
+        order: { createdAt: 'DESC' },
+      });
+      return matches;
+    } catch (error: any) {
+      throw new HttpException(
+        'Failed to fetch matches',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async create(dto: CreateMatchDto): Promise<Match> {
     const { playerAId, playerBId, scoreA, scoreB } = dto;
 
     if (playerAId === playerBId)
