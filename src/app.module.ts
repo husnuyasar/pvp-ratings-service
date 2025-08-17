@@ -5,6 +5,7 @@ import { typeOrmConfigAsync } from './db-config/typeorm.config';
 import { ConfigModule } from '@nestjs/config';
 import { PlayerModule } from './player/player.module';
 import { MatchModule } from './match/match.module';
+import { PlayerRatingHistoryModule } from './player-rating-history/player-rating-history.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { MatchModule } from './match/match.module';
     TypeOrmModule.forRootAsync(typeOrmConfigAsync),
     PlayerModule,
     MatchModule,
+    PlayerRatingHistoryModule,
   ],
   controllers: [AppController],
   providers: [],
