@@ -8,15 +8,15 @@ import { CreatePlayerDto } from './dto/create-player.dto';
 export class PlayerController {
   constructor(private readonly playerService: PlayerService) {}
 
+  @Get('top10')
+  async top10() {
+    return await this.playerService.top10();
+  }
+
   @Get(':id')
   @ApiParam({ name: 'id', description: 'Player ID', format: 'uuid' })
   async get(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return await this.playerService.get(id);
-  }
-
-  @Get('top10')
-  async top10() {
-    return await this.playerService.top10();
   }
 
   @Post('add')
