@@ -142,7 +142,9 @@ describe('MatchService', () => {
     const mockRatingService = {
       computePlayers: jest.fn(),
     } as unknown as RatingService;
-    const mockMatchRepo = {}; 
+    const mockMatchRepo = {
+      find: jest.fn(),
+    }; 
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -293,5 +295,47 @@ describe('MatchService', () => {
     const savedB = savedPlayersArg.find((p) => p.id === playerBId)!;
     expect(savedA.draws).toBe(1);
     expect(savedB.draws).toBe(1);
+  });
+
+
+  // getAll
+  it('getAll should return matches', async () => {
+    const rows = [
+      {
+        id: 'm2',
+        createdAt: new Date('2025-08-16T10:00:00Z'),
+        playerA: { id: playerAId },
+        playerB: { id: playerBId },
+      },
+      {
+        id: 'm1',
+        createdAt: new Date('2025-08-15T10:00:00Z'),
+        playerA: { id: playerBId },
+        playerB: { id: playerAId },
+      },
+    ] as Match[];
+
+    const matchRepo = (service as any).matchRepo as { find: jest.Mock };
+    matchRepo.find.mockResolvedValue(rows);
+
+    const result = await service.getAll();
+
+    expect(matchRepo.find).toHaveBeenCalledWith({
+      relations: ['playerA', 'playerB'],
+      order: { createdAt: 'DESC' },
+    });
+    expect(result).toBe(rows);
+  });
+
+  it('getAll throws 500 HttpException', async () => {
+    const matchRepo = (service as any).matchRepo as { find: jest.Mock };
+    matchRepo.find.mockRejectedValue(new Error('db failure'));
+
+    await expect(service.getAll()).rejects.toEqual(
+      new HttpException(
+        'Failed to fetch matches',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      ),
+    );
   });
 });
